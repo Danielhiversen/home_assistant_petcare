@@ -1,5 +1,4 @@
 """Constants for the Sure Petcare component."""
-from datetime import timedelta
 
 DOMAIN = "petcare"
 DEFAULT_DEVICE_CLASS = "lock"
