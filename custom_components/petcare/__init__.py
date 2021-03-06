@@ -77,7 +77,9 @@ async def async_setup(hass, config) -> bool:
 
     async def handle_set_lock_state(call):
         """Call when setting the lock state."""
-        await petcare_data_handler.locking(call.data[ATTR_FLAP_ID], call.data[ATTR_LOCK_STATE])
+        await petcare_data_handler.locking(
+            call.data[ATTR_FLAP_ID], call.data[ATTR_LOCK_STATE]
+        )
         await petcare_data_handler.get_device_data(force_update=True)
 
     lock_state_service_schema = vol.Schema(

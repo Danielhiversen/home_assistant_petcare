@@ -9,6 +9,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .petcare import Petcare
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -56,7 +57,7 @@ class SurePetcareSensor(Entity):
         self._dev = dev
         self.petcare_data_handler: Petcare = petcare_data_handler
 
-        self._name = self._dev['name'].capitalize()
+        self._name = self._dev["name"].capitalize()
 
     @property
     def name(self) -> str:
@@ -76,15 +77,15 @@ class SurePetcareSensor(Entity):
     async def async_update(self) -> None:
         """Get the latest data and update the state."""
         await self.petcare_data_handler.get_device_data()
-        self._dev = self.petcare_data_handler.get_device(self._dev['id'])
+        self._dev = self.petcare_data_handler.get_device(self._dev["id"])
 
     @property
     def state(self) -> Optional[int]:
         """Return battery level in percent."""
         print("state", self._dev)
-        return self._dev['state']
+        return self._dev["state"]
 
     @property
     def device_state_attributes(self) -> Optional[Dict[str, Any]]:
         """Return the state attributes of the device."""
-        return self._dev['attributes']
+        return self._dev["attributes"]

@@ -51,7 +51,9 @@ class EntityType(SureEnum):
     FEEDER = 4  # Microchip Pet Feeder Connect
     PROGRAMMER = 5  # Programmer
     CAT_FLAP = 6  # Cat Flap Connect
-    DEVICES = 13  # artificial ID, Pet Flap + Cat Flap + Feeder = 3 + 6 + 4 = 13  ¯\_(ツ)_/¯
+    DEVICES = (
+        13  # artificial ID, Pet Flap + Cat Flap + Feeder = 3 + 6 + 4 = 13  ¯\_(ツ)_/¯
+    )
 
 
 class LockState(SureEnum):
@@ -98,8 +100,12 @@ class Petcare:
 
         self._device_id = str(uuid1())
         self._timeout = 15
-        self._prev_data_request = datetime.datetime.utcnow() - datetime.timedelta(hours=10)
-        self._prev_timeline_request = datetime.datetime.utcnow() - datetime.timedelta(hours=10)
+        self._prev_data_request = datetime.datetime.utcnow() - datetime.timedelta(
+            hours=10
+        )
+        self._prev_timeline_request = datetime.datetime.utcnow() - datetime.timedelta(
+            hours=10
+        )
 
         self._auth_token = None
         self._etags = {}
@@ -130,7 +136,9 @@ class Petcare:
         )
         with async_timeout.timeout(self._timeout):
             response = await self.websession.post(
-                url=AUTH_RESOURCE, data=authentication_data, headers=self._generate_headers()
+                url=AUTH_RESOURCE,
+                data=authentication_data,
+                headers=self._generate_headers(),
             )
         if response.status != HTTPStatus.OK:
             return False
@@ -139,12 +147,13 @@ class Petcare:
         self._auth_token = json_data.get("data", {}).get("token")
         return True
 
-    async def fetch(self,
-                    method: str,
-                    resource: str,
-                    data=None,
-                    retry=3,
-                    ):
+    async def fetch(
+        self,
+        method: str,
+        resource: str,
+        data=None,
+        retry=3,
+    ):
         with async_timeout.timeout(self._timeout):
             headers = self._generate_headers()
 
@@ -179,51 +188,76 @@ class Petcare:
 
     def get_device(self, device_id):
         for val in self._hubs:
-            if val.get('id') == device_id:
+            if val.get("id") == device_id:
                 return val
         for val in self._flaps:
-            if val.get('id') == device_id:
+            if val.get("id") == device_id:
                 return val
         for val in self._pets:
-            if val.get('id') == device_id:
+            if val.get("id") == device_id:
                 return val
         return None
 
     async def get_device_data(self, force_update=False):
-        if (not force_update
-                and datetime.datetime.utcnow() - self._prev_data_request
-                < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
+        if (
+            not force_update
+            and datetime.datetime.utcnow() - self._prev_data_request
+            < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
         ):
             return self._data
         self._data = await self.fetch(method="GET", resource=MESTART_RESOURCE)
-        self._hubs = [{'id': val.get('id'),
-                       'household_id': val.get('household_id'),
-                       'name': val.get('name'),
-                       'state': val.get('status').get('led_mode'),
-                       'attributes': {'online': val.get('status').get('online'),
-                                      },
-                       }
-                      for val in self._data['data']['devices'] if val.get('product_id') == EntityType.HUB]
-        self._flaps = [{'id': val.get('id'),
-                        'household_id': val.get('household_id'),
-                        'name': val.get('name'),
-                        'state': LockState(val.get('control').get('locking')).name,
-                        'attributes': {'voltage': val.get('status').get('battery'),
-                                       'voltage_per_battery': val.get('status').get('battery')/4,
-                                       'battery': min(int((val.get('status').get('battery')/4 - SURE_BATT_VOLTAGE_LOW) / SURE_BATT_VOLTAGE_DIFF * 100), 100),
-                                       'online': val.get('status').get('online'),
-                                       'signal': val.get('status').get('signal').get('device_rssi'),
-                                       },
-                        }
-                       for val in self._data['data']['devices'] if val.get('product_id') == EntityType.CAT_FLAP]
-        self._pets = [{'id': val.get('id'),
-                       'household_id': val.get('household_id'),
-                       'name': val.get('name'),
-                       'state': Location(val.get('position').get('where')).name,
-                       'attributes': {'since': val.get('status').get('since'),
-                                      },
-                       }
-                      for val in self._data['data']['pets']]
+        self._hubs = [
+            {
+                "id": val.get("id"),
+                "household_id": val.get("household_id"),
+                "name": val.get("name"),
+                "state": val.get("status").get("led_mode"),
+                "attributes": {
+                    "online": val.get("status").get("online"),
+                },
+            }
+            for val in self._data["data"]["devices"]
+            if val.get("product_id") == EntityType.HUB
+        ]
+        self._flaps = [
+            {
+                "id": val.get("id"),
+                "household_id": val.get("household_id"),
+                "name": val.get("name"),
+                "state": LockState(val.get("control").get("locking")).name,
+                "attributes": {
+                    "voltage": val.get("status").get("battery"),
+                    "voltage_per_battery": val.get("status").get("battery") / 4,
+                    "battery": min(
+                        int(
+                            (
+                                val.get("status").get("battery") / 4
+                                - SURE_BATT_VOLTAGE_LOW
+                            )
+                            / SURE_BATT_VOLTAGE_DIFF
+                            * 100
+                        ),
+                        100,
+                    ),
+                    "online": val.get("status").get("online"),
+                    "signal": val.get("status").get("signal").get("device_rssi"),
+                },
+            }
+            for val in self._data["data"]["devices"]
+            if val.get("product_id") == EntityType.CAT_FLAP
+        ]
+        self._pets = [
+            {
+                "id": val.get("id"),
+                "household_id": val.get("household_id"),
+                "name": val.get("name"),
+                "state": Location(val.get("position").get("where")).name,
+                "attributes": {
+                    "since": val.get("status").get("since"),
+                },
+            }
+            for val in self._data["data"]["pets"]
+        ]
         return self._data
 
     #
@@ -262,9 +296,10 @@ class Petcare:
 
     async def get_pet(self, pet_id: int):
         """Retrieve the pet data/state."""
-        response = await self.fetch(method="GET",
-                                    resource=PET_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE,
-                                                                 pet_id=pet_id))
+        response = await self.fetch(
+            method="GET",
+            resource=PET_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, pet_id=pet_id),
+        )
         if response:
             return response.get("data")
         return None
@@ -275,7 +310,7 @@ class Petcare:
         data = {"locking": int(mode.value)}
 
         if (
-                response := await self.fetch(method="PUT", resource=resource, data=data)
+            response := await self.fetch(method="PUT", resource=resource, data=data)
         ) and (response_data := response.get("data")):
 
             desired_state = data.get("locking")
