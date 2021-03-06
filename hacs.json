@@ -1,0 +1,7 @@
+{
+    "name": "Petcare",
+    "domains": [
+        "sensor"
+    ],
+    "iot_class": "Cloud Polling"
+}
