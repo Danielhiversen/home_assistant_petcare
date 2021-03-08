@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from enum import IntEnum
 from http import HTTPStatus
@@ -103,7 +104,7 @@ class Petcare:
         self.websession = websession
 
         self._device_id = str(uuid1())
-        self._timeout = 25
+        self._timeout = 35
         self._prev_data_request = datetime.datetime.utcnow() - datetime.timedelta(
             hours=10
         )
@@ -158,27 +159,33 @@ class Petcare:
         data=None,
         retry=3,
     ):
-        with async_timeout.timeout(self._timeout):
-            headers = self._generate_headers()
+        try:
+            with async_timeout.timeout(self._timeout):
+                headers = self._generate_headers()
 
-            if resource in self._etags:
-                headers[ETAG] = str(self._etags.get(resource))
+                if resource in self._etags:
+                    headers[ETAG] = str(self._etags.get(resource))
 
-            await self.websession.options(resource, headers=headers)
-            response = await self.websession.request(
-                method, resource, headers=headers, data=data
-            )
+                await self.websession.options(resource, headers=headers)
+                response = await self.websession.request(
+                    method, resource, headers=headers, data=data
+                )
 
-        if response.status == HTTPStatus.OK or response.status == HTTPStatus.CREATED:
-            json_data = await response.json()
-            if ETAG in response.headers:
-                self._etags[resource] = response.headers[ETAG].strip('"')
-            return json_data
-        elif response.status == HTTPStatus.UNAUTHORIZED:
-            self._auth_token = None
+            if response.status == HTTPStatus.OK or response.status == HTTPStatus.CREATED:
+                json_data = await response.json()
+                if ETAG in response.headers:
+                    self._etags[resource] = response.headers[ETAG].strip('"')
+                return json_data
+            elif response.status == HTTPStatus.UNAUTHORIZED:
+                self._auth_token = None
+                if retry > 0:
+                    if await self.login():
+                        return await self.fetch(method, resource, data, retry - 1)
+        except asyncio.TimeoutError:
             if retry > 0:
-                if await self.login():
-                    return await self.fetch(method, resource, data, retry - 1)
+                await asyncio.sleep(10)
+                return await self.fetch(method, resource, data, retry - 1)
+            raise
         return None
 
     def get_flaps(self):
