@@ -2,12 +2,9 @@
 import logging
 from typing import Any, Dict, Optional
 
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
-
-
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
+from .const import DOMAIN
 from .petcare import Petcare
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,22 +12,16 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Petcare."""
-    print("aaa")
-    await _setup(hass, config[CONF_USERNAME], config[CONF_PASSWORD], async_add_entities)
+    await _setup(hass, async_add_entities)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the Petcare with config flow."""
-    print("bbbbaaa")
-    await _setup(
-        hass, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], async_add_entities
-    )
+    await _setup(hass, async_add_entities)
 
 
-async def _setup(hass, email, password, async_add_entities):
-    petcare_data_handler = Petcare(
-        email, password, websession=async_get_clientsession(hass)
-    )
+async def _setup(hass, async_add_entities):
+    petcare_data_handler = hass.data[DOMAIN]
 
     await petcare_data_handler.login()
     await petcare_data_handler.get_device_data()
@@ -72,7 +63,7 @@ class SurePetcareSensor(Entity):
     @property
     def available(self) -> bool:
         """Return true if entity is available."""
-        return bool(self.state)
+        return self._dev["available"]
 
     async def async_update(self) -> None:
         """Get the latest data and update the state."""

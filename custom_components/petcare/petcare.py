@@ -30,11 +30,7 @@ NOTIFICATION_RESOURCE: str = f"{BASE_RESOURCE}/notification"
 TIMELINE_RESOURCE: str = f"{BASE_RESOURCE}/timeline"
 MESTART_RESOURCE: str = f"{BASE_RESOURCE}/me/start"
 CONTROL_RESOURCE: str = "{BASE_RESOURCE}/device/{flap_id}/control"
-PET_RESOURCE: str = (
-    "{BASE_RESOURCE}/pet?with%5B%5D=photo&with%5B%5D=breed&"
-    "with%5B%5D=conditions&with%5B%5D=tag&with%5B%5D=food_type"
-    "&with%5B%5D=species&with%5B%5D=position&with%5B%5D=status"
-)
+PET_RESOURCE: str = "{BASE_RESOURCE}/pet?with%5B%5D=photo&with%5B%5D=breed&with%5B%5D=conditions&with%5B%5D=tag&with%5B%5D=food_type&with%5B%5D=species&with%5B%5D=position&with%5B%5D=status"
 POSITION_RESOURCE: str = "{BASE_RESOURCE}/pet/{pet_id}/position"
 
 
@@ -103,7 +99,7 @@ class Petcare:
         self.websession = websession
 
         self._device_id = str(uuid1())
-        self._timeout = 15
+        self._timeout = 25
         self._prev_data_request = datetime.datetime.utcnow() - datetime.timedelta(
             hours=10
         )
@@ -210,15 +206,15 @@ class Petcare:
         ):
             return self._data
         self._data = await self.fetch(method="GET", resource=MESTART_RESOURCE)
+        print(self._data)
         self._hubs = [
             {
                 "id": val.get("id"),
                 "household_id": val.get("household_id"),
                 "name": val.get("name"),
                 "state": val.get("status").get("led_mode"),
-                "attributes": {
-                    "online": val.get("status").get("online"),
-                },
+                "available": val.get("status").get("online"),
+                "attributes": {},
             }
             for val in self._data["data"]["devices"]
             if val.get("product_id") == EntityType.HUB
@@ -229,6 +225,7 @@ class Petcare:
                 "household_id": val.get("household_id"),
                 "name": val.get("name"),
                 "state": LockState(val.get("control").get("locking")).name,
+                "available": val.get("status").get("online"),
                 "attributes": {
                     "voltage": val.get("status").get("battery"),
                     "voltage_per_battery": val.get("status").get("battery") / 4,
@@ -243,7 +240,6 @@ class Petcare:
                         ),
                         100,
                     ),
-                    "online": val.get("status").get("online"),
                     "signal": val.get("status").get("signal").get("device_rssi"),
                 },
             }
@@ -256,12 +252,14 @@ class Petcare:
                 "household_id": val.get("household_id"),
                 "name": val.get("name"),
                 "state": Location(val.get("position").get("where")).name,
+                "available": val.get("position").get("where") is not None,
                 "attributes": {
                     "since": val.get("status").get("since"),
                 },
             }
             for val in self._data["data"]["pets"]
         ]
+        self._prev_data_request = datetime.datetime.utcnow()
         return self._data
 
     #
