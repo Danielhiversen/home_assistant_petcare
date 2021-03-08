@@ -30,7 +30,11 @@ NOTIFICATION_RESOURCE: str = f"{BASE_RESOURCE}/notification"
 TIMELINE_RESOURCE: str = f"{BASE_RESOURCE}/timeline"
 MESTART_RESOURCE: str = f"{BASE_RESOURCE}/me/start"
 CONTROL_RESOURCE: str = "{BASE_RESOURCE}/device/{flap_id}/control"
-PET_RESOURCE: str = "{BASE_RESOURCE}/pet?with%5B%5D=photo&with%5B%5D=breed&with%5B%5D=conditions&with%5B%5D=tag&with%5B%5D=food_type&with%5B%5D=species&with%5B%5D=position&with%5B%5D=status"
+PET_RESOURCE: str = (
+    "{BASE_RESOURCE}/pet?with%5B%5D=photo&with%5B%5D=breed&"
+    "with%5B%5D=conditions&with%5B%5D=tag&with%5B%5D=food_type"
+    "&with%5B%5D=species&with%5B%5D=position&with%5B%5D=status"
+)
 POSITION_RESOURCE: str = "{BASE_RESOURCE}/pet/{pet_id}/position"
 
 
@@ -206,7 +210,6 @@ class Petcare:
         ):
             return self._data
         self._data = await self.fetch(method="GET", resource=MESTART_RESOURCE)
-        print(self._data)
         self._hubs = [
             {
                 "id": val.get("id"),
@@ -290,11 +293,6 @@ class Petcare:
     #             self._flaps[_id] = {'state': LockState(json.loads(val.get('data', {})).get('mode')),
     #                                 'data': val.get('devices')[0]}
     #     self._prev_timeline_request = datetime.datetime.utcnow()
-    #     print("pets")
-    #     print(self._pets)
-    #     print("flaps")
-    #     print(self._flaps)
-    #     print("here")
 
     async def get_pet(self, pet_id: int):
         """Retrieve the pet data/state."""

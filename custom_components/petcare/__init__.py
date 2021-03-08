@@ -77,6 +77,4 @@ async def async_setup(hass, config) -> bool:
         )
     )
 
-    print("pet")
-
     return True
