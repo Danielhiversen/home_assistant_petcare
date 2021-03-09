@@ -1,12 +1,13 @@
 import asyncio
 import datetime
+import json
 from enum import IntEnum
 from http import HTTPStatus
-
-import async_timeout
 from uuid import uuid1
 
-RATE_LIMIT_SECONDS = 180
+import async_timeout
+
+RATE_LIMIT_SECONDS = 300
 
 ACCEPT = "Accept"
 ACCEPT_ENCODING = "Accept-Encoding"
@@ -171,7 +172,10 @@ class Petcare:
                     method, resource, headers=headers, data=data
                 )
 
-            if response.status == HTTPStatus.OK or response.status == HTTPStatus.CREATED:
+            if (
+                response.status == HTTPStatus.OK
+                or response.status == HTTPStatus.CREATED
+            ):
                 json_data = await response.json()
                 if ETAG in response.headers:
                     self._etags[resource] = response.headers[ETAG].strip('"')
@@ -259,47 +263,57 @@ class Petcare:
         self._pets = [
             {
                 "id": val.get("id"),
+                "tag_id": val.get("tag_id"),
                 "household_id": val.get("household_id"),
                 "name": val.get("name"),
                 "state": Location(val.get("position").get("where")).name,
                 "available": val.get("position").get("where") is not None,
                 "attributes": {
-                    "since": val.get("status").get("since"),
+                    "since": val.get("position").get("since"),
                 },
             }
             for val in self._data["data"]["pets"]
         ]
+
         self._prev_data_request = datetime.datetime.utcnow()
+
+        await self.get_timeline()
+
         return self._data
 
-    #
-    # async def get_timeline(self, force_update=False):
-    #     if (not force_update
-    #             and datetime.datetime.utcnow() - self._prev_timeline_request
-    #             < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
-    #     ):
-    #         return
-    #
-    #     data = await self.fetch(method="GET", resource=TIMELINE_RESOURCE)
-    #     for val in data.get("data"):
-    #         if val.get('type') == Event.MOVE:
-    #             _id = val.get('tags')[0].get('id')
-    #             if _id in self._pets:
-    #                 updated_at = parse(val.get('devices')[0]['updated_at'])
-    #                 updated_at_current = parse(self._pets[_id]['data']['updated_at'])
-    #                 if updated_at < updated_at_current:
-    #                     continue
-    #             self._pets[_id] = {'data': val.get('devices')[0]}
-    #         elif val.get('type') == Event.LOCK_ST:
-    #             _id = val.get('devices')[0].get('id')
-    #             if _id in self._flaps:
-    #                 updated_at = parse(val.get('devices')[0]['updated_at'])
-    #                 updated_at_current = parse(self._flaps[_id]['data']['updated_at'])
-    #                 if updated_at < updated_at_current:
-    #                     continue
-    #             self._flaps[_id] = {'state': LockState(json.loads(val.get('data', {})).get('mode')),
-    #                                 'data': val.get('devices')[0]}
-    #     self._prev_timeline_request = datetime.datetime.utcnow()
+    async def get_timeline(self, force_update=False):
+        if (
+            not force_update
+            and datetime.datetime.utcnow() - self._prev_timeline_request
+            < datetime.timedelta(seconds=RATE_LIMIT_SECONDS * 3)
+        ):
+            return
+
+        data = await self.fetch(method="GET", resource=TIMELINE_RESOURCE)
+        for val in data.get("data"):
+            for pet in self._pets:
+                if (
+                    val.get("type") == Event.MOVE
+                    and val.get("devices") is not None
+                    and pet["attributes"].get("event") is None
+                    and val.get("tags")[0].get("id") == pet["tag_id"]
+                ):
+                    pet["attributes"]["event"] = (
+                        f'{pet["name"]} look through {val["devices"][0]["name"]},'
+                        f' {val["movements"][0]["direction"]}, {val["created_at"]}'
+                    )
+            for flap in self._flaps:
+                if (
+                    val.get("type") == Event.LOCK_ST
+                    and flap["attributes"].get("event") is None
+                    and val.get("devices")[0]["id"] == flap["id"]
+                ):
+                    flap["attributes"]["event"] = (
+                        f'{val["users"][0]["name"]} '
+                        f'{LockState(json.loads(val["data"])["mode"]).name.lower()} '
+                        f'{val.get("devices")[0]["name"]} at {val["updated_at"]}'
+                    )
+        self._prev_timeline_request = datetime.datetime.utcnow()
 
     async def get_pet(self, pet_id: int):
         """Retrieve the pet data/state."""

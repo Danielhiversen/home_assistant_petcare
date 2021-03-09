@@ -28,13 +28,10 @@ async def _setup(hass, async_add_entities):
 
     dev = []
     for pet in petcare_data_handler.get_pets():
-        print("pet", pet)
         dev.append(SurePetcareSensor(pet, petcare_data_handler))
     for hub in petcare_data_handler.get_hubs():
-        print("hub", hub)
         dev.append(SurePetcareSensor(hub, petcare_data_handler))
     for flap in petcare_data_handler.get_flaps():
-        print("flap", flap)
         dev.append(SurePetcareSensor(flap, petcare_data_handler))
     async_add_entities(dev)
 
@@ -73,7 +70,6 @@ class SurePetcareSensor(Entity):
     @property
     def state(self) -> Optional[int]:
         """Return battery level in percent."""
-        print("state", self._dev)
         return self._dev["state"]
 
     @property

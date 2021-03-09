@@ -3,11 +3,11 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries, core, exceptions
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .petcare import Petcare
 from .const import DOMAIN
+from .petcare import Petcare
 
 _LOGGER = logging.getLogger(__name__)
 

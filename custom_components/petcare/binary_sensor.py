@@ -1,9 +1,7 @@
 """Support for Sure PetCare Flaps/Pets binary sensors."""
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any, Dict, Optional
-
-from surepy import SureLocationID, SurepyProduct
 
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_CONNECTIVITY,
@@ -13,6 +11,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import CONF_ID, CONF_TYPE
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from surepy import SureLocationID, SurepyProduct
 
 from . import SurePetcareAPI
 from .const import DATA_SURE_PETCARE, SPC, TOPIC_UPDATE
