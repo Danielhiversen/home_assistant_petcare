@@ -12,7 +12,7 @@ from .petcare import Petcare
 _LOGGER = logging.getLogger(__name__)
 
 DATA_SCHEMA = vol.Schema(
-    {vol.Required(CONF_USERNAME): int, vol.Required(CONF_PASSWORD): str}
+    {vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str}
 )
 
 
