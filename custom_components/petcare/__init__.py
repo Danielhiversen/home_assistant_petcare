@@ -3,7 +3,7 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -17,7 +17,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Required(CONF_USERNAME): cv.string,
+                vol.Required(CONF_EMAIL): cv.string,
                 vol.Required(CONF_PASSWORD): cv.string,
             }
         )
@@ -54,7 +54,7 @@ async def async_setup(hass, config) -> bool:
 
     # sure petcare api connection
     petcare_data_handler = Petcare(
-        conf[CONF_USERNAME],
+        conf[CONF_EMAIL],
         conf[CONF_PASSWORD],
         async_get_clientsession(hass),
     )
