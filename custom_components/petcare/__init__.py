@@ -50,19 +50,6 @@ async def async_unload_entry(hass, config_entry):
 
 async def async_setup(hass, config) -> bool:
     """Initialize the Sure Petcare component."""
-    conf = config[DOMAIN]
-
-    # sure petcare api connection
-    petcare_data_handler = Petcare(
-        conf[CONF_EMAIL],
-        conf[CONF_PASSWORD],
-        async_get_clientsession(hass),
-    )
-
-    hass.data[DOMAIN] = petcare_data_handler
-
-    if not await petcare_data_handler.login():
-        return False
 
     hass.async_create_task(
         hass.config_entries.flow.async_init(
