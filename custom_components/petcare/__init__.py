@@ -5,8 +5,10 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
+from .petcare import Petcare
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +28,17 @@ CONFIG_SCHEMA = vol.Schema(
 
 async def async_setup_entry(hass, entry):
     """Set up the Petcare."""
+    petcare_data_handler = Petcare(
+        entry.data[CONF_EMAIL],
+        entry.data[CONF_PASSWORD],
+        async_get_clientsession(hass),
+    )
+
+    hass.data[DOMAIN] = petcare_data_handler
+
+    if not await petcare_data_handler.login():
+        return False
+
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
@@ -48,6 +61,8 @@ async def async_unload_entry(hass, config_entry):
 
 async def async_setup(hass, config) -> bool:
     """Initialize the Sure Petcare component."""
+    if DOMAIN not in config:
+        return True
 
     hass.async_create_task(
         hass.config_entries.flow.async_init(
