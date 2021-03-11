@@ -228,7 +228,12 @@ class Petcare:
                 "name": val.get("name"),
                 "state": val.get("status").get("led_mode"),
                 "available": val.get("status").get("online"),
-                "attributes": {},
+                "attributes": {
+                    "firmware": val.get("status")
+                    .get("version")
+                    .get("device")
+                    .get("firmware"),
+                },
             }
             for val in self._data["data"]["devices"]
             if val.get("product_id") == EntityType.HUB
@@ -295,13 +300,19 @@ class Petcare:
                 if (
                     val.get("type") == Event.MOVE
                     and val.get("devices") is not None
-                    and pet["attributes"].get("event") is None
                     and val.get("tags")[0].get("id") == pet["tag_id"]
+                    and val.get("movements") is not None
                 ):
-                    pet["attributes"]["event"] = (
-                        f'{pet["name"]} look through {val["devices"][0]["name"]},'
-                        f' {val["movements"][0]["direction"]}, {val["created_at"]}'
-                    )
+                    if (
+                        val.get("movements")[0].get("direction") == 0
+                        and pet["attributes"].get("looked_through") is None
+                    ):
+                        pet["attributes"]["looked_through"] = val["created_at"]
+                    elif (
+                        val.get("movements")[0].get("direction") == 1
+                        and pet["attributes"].get("entered") is None
+                    ):
+                        pet["attributes"]["entered"] = val["created_at"]
             for flap in self._flaps:
                 if (
                     val.get("type") == Event.LOCK_ST
