@@ -290,7 +290,7 @@ class Petcare:
         if (
             not force_update
             and datetime.datetime.utcnow() - self._prev_timeline_request
-            < datetime.timedelta(seconds=RATE_LIMIT_SECONDS * 3)
+            < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
         ):
             return
 
