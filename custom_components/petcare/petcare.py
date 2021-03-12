@@ -154,7 +154,9 @@ class Petcare:
                 return self._data
 
             authentication_data = dict(
-                email_address=self.email, password=self.password, device_id=self._device_id
+                email_address=self.email,
+                password=self.password,
+                device_id=self._device_id,
             )
             with async_timeout.timeout(self._timeout):
                 response = await self.websession.post(
@@ -192,8 +194,8 @@ class Petcare:
                     )
 
             if (
-                    response.status == HTTPStatus.OK
-                    or response.status == HTTPStatus.CREATED
+                response.status == HTTPStatus.OK
+                or response.status == HTTPStatus.CREATED
             ):
                 json_data = await response.json()
                 if ETAG in response.headers:
@@ -316,12 +318,15 @@ class Petcare:
             ):
                 return
             household_ids = []
-            for device in self._data.get('data').get('devices'):
-                household_id = device.get('household_id')
+            for device in self._data.get("data").get("devices"):
+                household_id = device.get("household_id")
                 if household_id in household_ids:
                     continue
                 household_ids.append(household_id)
-                data = await self.fetch(method="GET", resource=f"{TIMELINE_RESOURCE}/household/{household_id}/")
+                data = await self.fetch(
+                    method="GET",
+                    resource=f"{TIMELINE_RESOURCE}/household/{household_id}/",
+                )
                 for val in data.get("data"):
                     for pet in self._pets:
                         if (
@@ -348,8 +353,8 @@ class Petcare:
 
                     for flap in self._flaps:
                         # if val.get("devices")[0]["id"] == flap["id"]:
-                            # if val.get("devices")[0]["id"] == flap["id"]:
-                            #     print(val)
+                        # if val.get("devices")[0]["id"] == flap["id"]:
+                        #     print(val)
                         if (
                             val.get("type") == Event.LOCK_ST
                             and flap["attributes"].get("event") is None
