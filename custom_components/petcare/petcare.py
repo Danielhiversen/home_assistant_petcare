@@ -109,6 +109,9 @@ class Petcare:
         self._prev_data_request = datetime.datetime.utcnow() - datetime.timedelta(
             hours=10
         )
+        self._prev_login_request = datetime.datetime.utcnow() - datetime.timedelta(
+            hours=10
+        )
         self._prev_timeline_request = datetime.datetime.utcnow() - datetime.timedelta(
             hours=10
         )
@@ -120,6 +123,11 @@ class Petcare:
         self._hubs = {}
         self._flaps = {}
         self._pets = {}
+
+        self._fetch_lock = asyncio.Lock()
+        self._data_lock = asyncio.Lock()
+        self._timeline_lock = asyncio.Lock()
+        self._login_lock = asyncio.Lock()
 
     def _generate_headers(self):
         """Build a HTTP header accepted by the API"""
@@ -137,21 +145,33 @@ class Petcare:
         }
 
     async def login(self):
-        authentication_data = dict(
-            email_address=self.email, password=self.password, device_id=self._device_id
-        )
-        with async_timeout.timeout(self._timeout):
-            response = await self.websession.post(
-                url=AUTH_RESOURCE,
-                data=authentication_data,
-                headers=self._generate_headers(),
-            )
-        if response.status != HTTPStatus.OK:
-            return False
+        async with self._login_lock:
+            if (
+                self._auth_token
+                and datetime.datetime.utcnow() - self._prev_login_request
+                < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
+            ):
+                return self._data
 
-        json_data = await response.json()
-        self._auth_token = json_data.get("data", {}).get("token")
-        return True
+            authentication_data = dict(
+                email_address=self.email,
+                password=self.password,
+                device_id=self._device_id,
+            )
+            with async_timeout.timeout(self._timeout):
+                response = await self.websession.post(
+                    url=AUTH_RESOURCE,
+                    data=authentication_data,
+                    headers=self._generate_headers(),
+                )
+            if response.status != HTTPStatus.OK:
+                self._auth_token = None
+                return False
+
+            json_data = await response.json()
+            self._auth_token = json_data.get("data", {}).get("token")
+            self._prev_login_request = datetime.datetime.utcnow()
+            return True
 
     async def fetch(
         self,
@@ -161,16 +181,17 @@ class Petcare:
         retry=3,
     ):
         try:
-            with async_timeout.timeout(self._timeout):
-                headers = self._generate_headers()
+            headers = self._generate_headers()
 
-                if resource in self._etags:
-                    headers[ETAG] = str(self._etags.get(resource))
+            if resource in self._etags:
+                headers[ETAG] = str(self._etags.get(resource))
 
-                await self.websession.options(resource, headers=headers)
-                response = await self.websession.request(
-                    method, resource, headers=headers, data=data
-                )
+            async with self._fetch_lock:
+                with async_timeout.timeout(self._timeout):
+                    await self.websession.options(resource, headers=headers)
+                    response = await self.websession.request(
+                        method, resource, headers=headers, data=data
+                    )
 
             if (
                 response.status == HTTPStatus.OK
@@ -214,117 +235,138 @@ class Petcare:
         return None
 
     async def get_device_data(self, force_update=False):
-        if (
-            not force_update
-            and datetime.datetime.utcnow() - self._prev_data_request
-            < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
-        ):
-            return self._data
-        self._data = await self.fetch(method="GET", resource=MESTART_RESOURCE)
-        self._hubs = [
-            {
-                "id": val.get("id"),
-                "household_id": val.get("household_id"),
-                "name": val.get("name"),
-                "state": val.get("status").get("led_mode"),
-                "available": val.get("status").get("online"),
-                "attributes": {
-                    "firmware": val.get("status")
-                    .get("version")
-                    .get("device")
-                    .get("firmware"),
-                },
-            }
-            for val in self._data["data"]["devices"]
-            if val.get("product_id") == EntityType.HUB
-        ]
-        self._flaps = [
-            {
-                "id": val.get("id"),
-                "household_id": val.get("household_id"),
-                "name": val.get("name"),
-                "state": LockState(val.get("control").get("locking")).name,
-                "available": val.get("status").get("online"),
-                "attributes": {
-                    "voltage": val.get("status").get("battery"),
-                    "voltage_per_battery": val.get("status").get("battery") / 4,
-                    "battery": min(
-                        int(
-                            (
-                                val.get("status").get("battery") / 4
-                                - SURE_BATT_VOLTAGE_LOW
-                            )
-                            / SURE_BATT_VOLTAGE_DIFF
-                            * 100
+        async with self._data_lock:
+            if (
+                not force_update
+                and datetime.datetime.utcnow() - self._prev_data_request
+                < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
+            ):
+                return self._data
+            self._data = await self.fetch(method="GET", resource=MESTART_RESOURCE)
+            print(self._data)
+            self._prev_data_request = datetime.datetime.utcnow()
+            self._hubs = [
+                {
+                    "id": val.get("id"),
+                    "household_id": val.get("household_id"),
+                    "name": val.get("name"),
+                    "state": val.get("status").get("led_mode"),
+                    "available": val.get("status").get("online"),
+                    "attributes": {
+                        "firmware": val.get("status")
+                        .get("version")
+                        .get("device")
+                        .get("firmware"),
+                    },
+                }
+                for val in self._data["data"]["devices"]
+                if val.get("product_id") == EntityType.HUB
+            ]
+            self._flaps = [
+                {
+                    "id": val.get("id"),
+                    "household_id": val.get("household_id"),
+                    "name": val.get("name"),
+                    "state": LockState(val.get("control").get("locking")).name,
+                    "available": val.get("status").get("online"),
+                    "attributes": {
+                        "voltage": val.get("status").get("battery"),
+                        "voltage_per_battery": val.get("status").get("battery") / 4,
+                        "battery": min(
+                            int(
+                                (
+                                    val.get("status").get("battery") / 4
+                                    - SURE_BATT_VOLTAGE_LOW
+                                )
+                                / SURE_BATT_VOLTAGE_DIFF
+                                * 100
+                            ),
+                            100,
                         ),
-                        100,
-                    ),
-                    "signal": val.get("status").get("signal").get("device_rssi"),
-                },
-            }
-            for val in self._data["data"]["devices"]
-            if val.get("product_id") == EntityType.CAT_FLAP
-        ]
-        self._pets = [
-            {
-                "id": val.get("id"),
-                "tag_id": val.get("tag_id"),
-                "household_id": val.get("household_id"),
-                "name": val.get("name"),
-                "state": Location(val.get("position").get("where")).name,
-                "available": val.get("position").get("where") is not None,
-                "attributes": {
-                    "since": val.get("position").get("since"),
-                },
-            }
-            for val in self._data["data"]["pets"]
-        ]
+                        "signal": val.get("status").get("signal").get("device_rssi"),
+                    },
+                }
+                for val in self._data["data"]["devices"]
+                if val.get("product_id") == EntityType.CAT_FLAP
+            ]
 
-        self._prev_data_request = datetime.datetime.utcnow()
+            self._pets = [
+                {
+                    "id": val.get("id"),
+                    "tag_id": val.get("tag_id"),
+                    "household_id": val.get("household_id"),
+                    "name": val.get("name"),
+                    "state": Location(val.get("position").get("where")).name,
+                    "available": val.get("position").get("where") is not None,
+                    "attributes": {
+                        "since": val.get("position").get("since"),
+                    },
+                }
+                for val in self._data["data"]["pets"]
+            ]
 
-        await self.get_timeline()
+            await self.get_timeline()
 
-        return self._data
+            return self._data
 
     async def get_timeline(self, force_update=False):
-        if (
-            not force_update
-            and datetime.datetime.utcnow() - self._prev_timeline_request
-            < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
-        ):
-            return
+        async with self._timeline_lock:
+            if (
+                not force_update
+                and datetime.datetime.utcnow() - self._prev_timeline_request
+                < datetime.timedelta(seconds=RATE_LIMIT_SECONDS)
+            ):
+                return
+            household_ids = []
+            for device in self._data.get("data").get("devices"):
+                household_id = device.get("household_id")
+                if household_id in household_ids:
+                    continue
+                household_ids.append(household_id)
+                data = await self.fetch(
+                    method="GET",
+                    resource=f"{TIMELINE_RESOURCE}/household/{household_id}/",
+                )
+                for val in data.get("data"):
+                    for pet in self._pets:
+                        if (
+                            val.get("type") == Event.MOVE
+                            and val.get("devices") is not None
+                            and val.get("tags")[0].get("id") == pet["tag_id"]
+                            and val.get("movements") is not None
+                        ):
+                            if (
+                                val.get("movements")[0].get("direction") == 0
+                                and pet["attributes"].get("looked_through") is None
+                            ):
+                                pet["attributes"]["looked_through"] = val["created_at"]
+                            elif (
+                                val.get("movements")[0].get("direction") == 1
+                                and pet["attributes"].get("entered") is None
+                            ):
+                                pet["attributes"]["entered"] = val["created_at"]
+                            elif (
+                                val.get("movements")[0].get("direction") == 2
+                                and pet["attributes"].get("left") is None
+                            ):
+                                pet["attributes"]["left"] = val["created_at"]
 
-        data = await self.fetch(method="GET", resource=TIMELINE_RESOURCE)
-        for val in data.get("data"):
-            for pet in self._pets:
-                if (
-                    val.get("type") == Event.MOVE
-                    and val.get("devices") is not None
-                    and val.get("tags")[0].get("id") == pet["tag_id"]
-                    and val.get("movements") is not None
-                ):
-                    if (
-                        val.get("movements")[0].get("direction") == 0
-                        and pet["attributes"].get("looked_through") is None
-                    ):
-                        pet["attributes"]["looked_through"] = val["created_at"]
-                    elif (
-                        val.get("movements")[0].get("direction") == 1
-                        and pet["attributes"].get("entered") is None
-                    ):
-                        pet["attributes"]["entered"] = val["created_at"]
-            for flap in self._flaps:
-                if (
-                    val.get("type") == Event.LOCK_ST
-                    and flap["attributes"].get("event") is None
-                    and val.get("devices")[0]["id"] == flap["id"]
-                ):
-                    flap["attributes"]["event"] = (
-                        f'{val["users"][0]["name"]} '
-                        f'{LockState(json.loads(val["data"])["mode"]).name.lower()} '
-                        f'{val.get("devices")[0]["name"]} at {val["updated_at"]}'
-                    )
-        self._prev_timeline_request = datetime.datetime.utcnow()
+                    for flap in self._flaps:
+                        # if val.get("devices")[0]["id"] == flap["id"]:
+                        # if val.get("devices")[0]["id"] == flap["id"]:
+                        #     print(val)
+                        if (
+                            val.get("type") == Event.LOCK_ST
+                            and flap["attributes"].get("event") is None
+                            and val.get("devices")[0]["id"] == flap["id"]
+                        ):
+                            flap["attributes"]["event"] = (
+                                f'{LockState(json.loads(val["data"])["mode"]).name.lower()} '
+                                f'by {val["users"][0]["name"]} '
+                                f'at {val["updated_at"]}'
+                            )
+
+            self._prev_timeline_request = datetime.datetime.utcnow()
 
     async def get_pet(self, pet_id: int):
         """Retrieve the pet data/state."""
