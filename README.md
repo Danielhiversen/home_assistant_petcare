@@ -3,9 +3,16 @@
 [![GitHub Release][releases-shield]][releases]
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 
-Custom component for using Sure Petcare flaps in Home Assistant.
+Custom component for using Sure Petcare flaps in Home Assistant. This is an alternative integration to the offical one: https://www.home-assistant.io/integrations/surepetcare/
+
+This add support for locks and limit the number of unecessary requests to petcare as much as possible. It does not support feeders.
 
 [Support the developer](http://paypal.me/dahoiv)
+
+## Acknowledgments
+
+* Thanks to [@benleb](https://github.com/benleb) for [https://github.com/benleb/surepy](https://github.com/benleb/surepy)
+* Thanks to [@rcastberg](https://github.com/rcastberg) for [github.com/rcastberg/sure_petcare](https://github.com/rcastberg/sure_petcare)
 
 
 ## Install
