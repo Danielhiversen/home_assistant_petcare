@@ -32,7 +32,7 @@ In configuration.yaml:
 
 ```
 petcare:
-  username: mail@mail.com
+  mail: mail@mail.com
   password: 'pswd'
 
 ```
