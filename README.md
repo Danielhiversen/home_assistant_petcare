@@ -16,7 +16,7 @@ This add support for locks and limit the number of unecessary requests to petcar
 
 
 ## Install
-Use [hacs](https://hacs.xyz/) (probably easier) or copy the files to the custom_components folder in Home Assistant (should be placed in the same folder as configuration.yaml) .
+Use [hacs](https://hacs.xyz/) (probably easier) or copy the files to the custom_components folder in Home Assistant (should be placed in the same folder as configuration.yaml) . How to install from hacs: https://hacs.xyz/docs/faq/custom_repositories/
 
 ## Configuration (2 options)
 
