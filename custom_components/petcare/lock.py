@@ -50,12 +50,6 @@ class SurePetcareLock(LockEntity):
 
         self._name = f"{lock_state}_{self._dev['name'].capitalize()}"
 
-    async def handle_set_lock_state(self):
-        """Call when setting the lock state."""
-        await self.petcare_data_handler.locking(self._dev["id"], self._lock_state)
-        await asyncio.sleep(20)
-        await self.petcare_data_handler.get_device_data(force_update=True)
-
     @property
     def name(self) -> str:
         """Return the name of the device if any."""
@@ -80,19 +74,21 @@ class SurePetcareLock(LockEntity):
         """Lock the lock."""
         if self.is_locked:
             return
-        await self.petcare_data_handler.locking(self._dev["id"], self._lock_state)
-        await self.petcare_data_handler.get_device_data(force_update=True)
+        await self.petcare_data_handler.locking(self._dev["id"], LockState.LOCKED)
+        await asyncio.sleep(5)
+        await self.async_update(force_update=True)
 
     async def async_unlock(self, **kwargs):
         """Unlock the lock."""
         if not self.is_locked:
             return
         await self.petcare_data_handler.locking(self._dev["id"], LockState.UNLOCKED)
-        await self.petcare_data_handler.get_device_data(force_update=True)
+        await asyncio.sleep(5)
+        await self.async_update(force_update=True)
 
-    async def async_update(self) -> None:
+    async def async_update(self, force_update=False) -> None:
         """Get the latest data and update the state."""
-        await self.petcare_data_handler.get_device_data()
+        await self.petcare_data_handler.get_device_data(force_update=force_update)
         self._dev = self.petcare_data_handler.get_device(self._dev["id"])
 
     @property
