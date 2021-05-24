@@ -60,9 +60,6 @@ class EntityType(SureEnum):
     FEEDER = 4  # Microchip Pet Feeder Connect
     PROGRAMMER = 5  # Programmer
     CAT_FLAP = 6  # Cat Flap Connect
-    DEVICES = (
-        13  # artificial ID, Pet Flap + Cat Flap + Feeder = 3 + 6 + 4 = 13  ¯\_(ツ)_/¯
-    )
 
 
 class LockState(SureEnum):
@@ -330,6 +327,7 @@ class Petcare:
                     method="GET",
                     resource=f"{TIMELINE_RESOURCE}/household/{household_id}/",
                 )
+                _LOGGER.debug("tl data %s, data)
                 for val in data.get("data"):
                     for pet in self._pets:
                         if (
