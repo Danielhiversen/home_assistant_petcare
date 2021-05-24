@@ -38,7 +38,6 @@ petcare:
 ```
 
 
-
 [releases]: https://github.com/Danielhiversen/home_assistant_petcare/releases
 [releases-shield]: https://img.shields.io/github/release/Danielhiversen/home_assistant_petcare.svg?style=popout
 [downloads-total-shield]: https://img.shields.io/github/downloads/Danielhiversen/home_assistant_petcare/total
