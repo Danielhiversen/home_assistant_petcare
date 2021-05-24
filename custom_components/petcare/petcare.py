@@ -327,7 +327,7 @@ class Petcare:
                     method="GET",
                     resource=f"{TIMELINE_RESOURCE}/household/{household_id}/",
                 )
-                _LOGGER.debug("tl data %s, data)
+                _LOGGER.debug("tl data %s", data)
                 for val in data.get("data"):
                     for pet in self._pets:
                         if (
