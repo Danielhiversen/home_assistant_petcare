@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+import logging
 from enum import IntEnum
 from http import HTTPStatus
 from uuid import uuid1
@@ -38,6 +39,8 @@ PET_RESOURCE: str = (
     "&with%5B%5D=species&with%5B%5D=position&with%5B%5D=status"
 )
 POSITION_RESOURCE: str = "{BASE_RESOURCE}/pet/{pet_id}/position"
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SureEnum(IntEnum):
@@ -243,7 +246,7 @@ class Petcare:
             ):
                 return self._data
             self._data = await self.fetch(method="GET", resource=MESTART_RESOURCE)
-            print(self._data)
+            _LOGGER.debug("data %s", self._data)
             self._prev_data_request = datetime.datetime.utcnow()
             self._hubs = [
                 {
