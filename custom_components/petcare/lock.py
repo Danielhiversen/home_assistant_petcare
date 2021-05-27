@@ -74,7 +74,7 @@ class SurePetcareLock(LockEntity):
         """Lock the lock."""
         if self.is_locked:
             return
-        await self.petcare_data_handler.locking(self._dev["id"], LockState.LOCKED)
+        await self.petcare_data_handler.locking(self._dev["id"], self._lock_state)
         await asyncio.sleep(5)
         await self.async_update(force_update=True)
 
