@@ -270,6 +270,7 @@ class Petcare:
                     "state": LockState(val.get("control").get("locking")).name,
                     "available": val.get("status").get("online"),
                     "attributes": {
+                        "lock": LockState(val.get("control").get("locking")).name,
                         "voltage": val.get("status").get("battery"),
                         "voltage_per_battery": val.get("status").get("battery") / 4,
                         "battery": min(
