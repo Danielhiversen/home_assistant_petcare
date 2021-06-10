@@ -342,7 +342,9 @@ class Petcare:
                                     val.get("movements")[0].get("direction") == 0
                                     and pet["attributes"].get("looked_through") is None
                                 ):
-                                    pet["attributes"]["looked_through"] = val["created_at"]
+                                    pet["attributes"]["looked_through"] = val[
+                                        "created_at"
+                                    ]
                                 elif (
                                     val.get("movements")[0].get("direction") == 1
                                     and pet["attributes"].get("entered") is None
