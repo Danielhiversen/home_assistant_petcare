@@ -331,42 +331,48 @@ class Petcare:
                 _LOGGER.debug("tl data %s", data)
                 for val in data.get("data"):
                     for pet in self._pets:
-                        if (
-                            val.get("type") == Event.MOVE
-                            and val.get("devices") is not None
-                            and val.get("tags")[0].get("id") == pet["tag_id"]
-                            and val.get("movements") is not None
-                        ):
+                        try:
                             if (
-                                val.get("movements")[0].get("direction") == 0
-                                and pet["attributes"].get("looked_through") is None
+                                val.get("type") == Event.MOVE
+                                and val.get("devices") is not None
+                                and val.get("tags")[0].get("id") == pet["tag_id"]
+                                and val.get("movements") is not None
                             ):
-                                pet["attributes"]["looked_through"] = val["created_at"]
-                            elif (
-                                val.get("movements")[0].get("direction") == 1
-                                and pet["attributes"].get("entered") is None
-                            ):
-                                pet["attributes"]["entered"] = val["created_at"]
-                            elif (
-                                val.get("movements")[0].get("direction") == 2
-                                and pet["attributes"].get("left") is None
-                            ):
-                                pet["attributes"]["left"] = val["created_at"]
+                                if (
+                                    val.get("movements")[0].get("direction") == 0
+                                    and pet["attributes"].get("looked_through") is None
+                                ):
+                                    pet["attributes"]["looked_through"] = val["created_at"]
+                                elif (
+                                    val.get("movements")[0].get("direction") == 1
+                                    and pet["attributes"].get("entered") is None
+                                ):
+                                    pet["attributes"]["entered"] = val["created_at"]
+                                elif (
+                                    val.get("movements")[0].get("direction") == 2
+                                    and pet["attributes"].get("left") is None
+                                ):
+                                    pet["attributes"]["left"] = val["created_at"]
+                        except KeyError:
+                            continue
 
                     for flap in self._flaps:
                         # if val.get("devices")[0]["id"] == flap["id"]:
                         # if val.get("devices")[0]["id"] == flap["id"]:
                         #     print(val)
-                        if (
-                            val.get("type") == Event.LOCK_ST
-                            and flap["attributes"].get("event") is None
-                            and val.get("devices")[0]["id"] == flap["id"]
-                        ):
-                            flap["attributes"]["event"] = (
-                                f'{LockState(json.loads(val["data"])["mode"]).name.lower()} '
-                                f'by {val["users"][0]["name"]} '
-                                f'at {val["updated_at"]}'
-                            )
+                        try:
+                            if (
+                                val.get("type") == Event.LOCK_ST
+                                and flap["attributes"].get("event") is None
+                                and val.get("devices")[0]["id"] == flap["id"]
+                            ):
+                                flap["attributes"]["event"] = (
+                                    f'{LockState(json.loads(val["data"])["mode"]).name.lower()} '
+                                    f'by {val["users"][0]["name"]} '
+                                    f'at {val["updated_at"]}'
+                                )
+                        except KeyError:
+                            continue
 
             self._prev_timeline_request = datetime.datetime.utcnow()
 
