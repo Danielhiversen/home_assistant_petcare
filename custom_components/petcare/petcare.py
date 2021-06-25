@@ -285,7 +285,7 @@ class Petcare:
                             100,
                         ),
                         "signal": val.get("status").get("signal").get("device_rssi"),
-                        "control": str(val.get("control", {}).get("curfew", ""))
+                        "control": str(val.get("control", {}).get("curfew", "")),
                     },
                 }
                 for val in self._data["data"]["devices"]
