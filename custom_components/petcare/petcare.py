@@ -272,11 +272,11 @@ class Petcare:
                     "attributes": {
                         "lock": LockState(val.get("control").get("locking")).name,
                         "voltage": val.get("status").get("battery"),
-                        "voltage_per_battery": val.get("status").get("battery") / 4,
+                        "voltage_per_battery": val.get("status").get("battery", 0) / 4,
                         "battery": min(
                             int(
                                 (
-                                    val.get("status").get("battery") / 4
+                                    val.get("status").get("battery", 0) / 4
                                     - SURE_BATT_VOLTAGE_LOW
                                 )
                                 / SURE_BATT_VOLTAGE_DIFF
@@ -285,10 +285,11 @@ class Petcare:
                             100,
                         ),
                         "signal": val.get("status").get("signal").get("device_rssi"),
+                        "control": str(val.get("control", {}).get("curfew", "")),
                     },
                 }
                 for val in self._data["data"]["devices"]
-                if val.get("product_id") == EntityType.CAT_FLAP
+                if val.get("product_id") in [EntityType.CAT_FLAP, EntityType.PET_FLAP]
             ]
 
             self._pets = [
