@@ -267,10 +267,10 @@ class Petcare:
                     "id": val.get("id"),
                     "household_id": val.get("household_id"),
                     "name": val.get("name"),
-                    "state": LockState(val.get["status"]["locking"]["mode"]).name,
+                    "state": LockState(val["status"]["locking"]["mode"]).name,
                     "available": val.get("status").get("online"),
                     "attributes": {
-                        "lock": LockState(val.get["status"]["locking"]["mode"]).name,
+                        "lock": LockState(val["status"]["locking"]["mode"]).name,
                         "voltage": val.get("status").get("battery"),
                         "voltage_per_battery": val.get("status").get("battery", 0) / 4,
                         "battery": min(
