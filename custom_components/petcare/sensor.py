@@ -16,7 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 SET_PET_LOCATION_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required("Location"): vol.In(["Inside", "Outside"]),
+        vol.Required("location"): vol.In(["inside", "outside"]),
     }
 )
 
@@ -52,7 +52,7 @@ async def _setup(hass, async_add_entities):
         location = service.data.get("location")
         _LOGGER.error("petcare %s %s", entity_id, location)
         for _dev in devices:
-            _LOGGER.error("petcare %s", _dev.entity_id, _dev.dev["id"])
+            _LOGGER.error("petcare %s %s", _dev.entity_id, _dev.dev["id"])
 
     hass.services.async_register(
         DOMAIN,
