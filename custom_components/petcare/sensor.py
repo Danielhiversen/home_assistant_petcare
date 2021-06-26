@@ -46,7 +46,7 @@ async def _setup(hass, async_add_entities):
         devices.append(SurePetcareSensor(flap, petcare_data_handler))
     async_add_entities(devices)
 
-    def service_set_pet_location_handle(service):
+    async def service_set_pet_location_handle(service):
         """Handle for services."""
         entity_id = service.data.get("entity_id")
         location = service.data.get("location")
@@ -54,7 +54,7 @@ async def _setup(hass, async_add_entities):
         for _dev in devices:
             _LOGGER.error("petcare %s", _dev.entity_id, _dev.dev["id"])
 
-    hass.services.register(
+    hass.services.async_register(
         DOMAIN,
         "set_pet_location",
         service_set_pet_location_handle,
