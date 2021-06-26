@@ -59,7 +59,7 @@ async def _setup(hass, async_add_entities):
                 enum_location = Location.INSIDE if location == "inside" else Location.OUTSIDE
                 res = await petcare_data_handler.set_pet_location(_dev["id"], enum_location)
                 _LOGGER.error(
-                    "petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], location, res
+                    "petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], enum_location, res
                 )
 
     hass.services.async_register(
