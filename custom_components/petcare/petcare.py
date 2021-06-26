@@ -390,7 +390,7 @@ class Petcare:
         return None
 
     async def locking(self, flap_id: int, mode: LockState):
-        """Retrieve the flap data/state."""
+        """Locking."""
         resource = CONTROL_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, flap_id=flap_id)
         data = {"locking": int(mode.value)}
 
@@ -405,3 +405,12 @@ class Petcare:
             if state == desired_state:
                 return response
         return None
+
+    async def set_pet_location(self, pet_id: int, location: Location):
+        """Set the pet location."""
+        resource = POSITION_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, pet_id=pet_id)
+        data = {
+            "where": int(location.value),
+            "since": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        await self.fetch(method="POST", resource=resource, data=data)
