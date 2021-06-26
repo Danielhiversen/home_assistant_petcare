@@ -13,14 +13,6 @@ from .petcare import Petcare
 _LOGGER = logging.getLogger(__name__)
 
 
-SET_PET_LOCATION_SCHEMA = vol.Schema(
-    {
-        vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required("location"): vol.In(["inside", "outside"]),
-    }
-)
-
-
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Petcare."""
     await _setup(hass, async_add_entities)
@@ -38,27 +30,38 @@ async def _setup(hass, async_add_entities):
     await petcare_data_handler.get_device_data()
 
     devices = []
+    pet_names = []
     for pet in petcare_data_handler.get_pets():
         devices.append(SurePetcareSensor(pet, petcare_data_handler))
+        pet_names.append(pet["name"].capitalize())
     for hub in petcare_data_handler.get_hubs():
         devices.append(SurePetcareSensor(hub, petcare_data_handler))
     for flap in petcare_data_handler.get_flaps():
         devices.append(SurePetcareSensor(flap, petcare_data_handler))
     async_add_entities(devices)
 
+    set_pet_location_schema = vol.Schema(
+        {
+            vol.Optional("pet_name"): pet_names,
+            vol.Required("location"): vol.In(["inside", "outside"]),
+        }
+    )
+
     async def service_set_pet_location_handle(service):
         """Handle for services."""
-        entity_id = service.data.get("entity_id")
+        pet_name = service.data.get("pet_name")
         location = service.data.get("location")
         _LOGGER.error("petcare %s %s", entity_id, location)
         for _dev in devices:
-            _LOGGER.error("petcare %s %s", _dev.entity_id, _dev.dev["id"])
+            if pet_name == _dev["name"].capitalize():
+                res = await petcare_data_handler.set_pet_location(_dev["id"], location)
+                _LOGGER.error("petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], location, res)
 
     hass.services.async_register(
         DOMAIN,
         "set_pet_location",
         service_set_pet_location_handle,
-        schema=SET_PET_LOCATION_SCHEMA,
+        schema=set_pet_location_schema,
     )
 
 

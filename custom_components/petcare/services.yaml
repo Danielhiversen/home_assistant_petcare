@@ -3,9 +3,9 @@
 set_pet_location:
   description: Set pet location
   fields:
-    entity_id:
-      description: Entity id of pet device
-      example: sensor.my_cat
+    pet_name:
+      description: Name of pet
+      example: My_cat
     location:
       description: Pet location (Inside or Outside)
       example: inside
