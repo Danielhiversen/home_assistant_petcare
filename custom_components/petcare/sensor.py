@@ -51,9 +51,9 @@ async def _setup(hass, async_add_entities):
         """Handle for services."""
         pet_name = service.data.get("pet_name")
         location = service.data.get("location")
-        _LOGGER.error("petcare %s %s", entity_id, location)
+        _LOGGER.error("petcare %s %s", pet_name, location)
         for _dev in devices:
-            if pet_name == _dev["name"].capitalize():
+            if pet_name.lower() == _dev["name"].lower():
                 enum_location = (
                     Location.INSIDE if location == "inside" else Location.OUTSIDE
                 )
@@ -67,6 +67,7 @@ async def _setup(hass, async_add_entities):
                     enum_location,
                     res,
                 )
+                return
 
     hass.services.async_register(
         DOMAIN,
