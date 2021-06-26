@@ -55,7 +55,10 @@ async def _setup(hass, async_add_entities):
             _LOGGER.error("petcare %s", _dev.entity_id, _dev.dev["id"])
 
     hass.services.register(
-        DOMAIN, "set_pet_location", service_set_pet_location_handle, schema=SET_PET_LOCATION_SCHEMA
+        DOMAIN,
+        "set_pet_location",
+        service_set_pet_location_handle,
+        schema=SET_PET_LOCATION_SCHEMA,
     )
 
 
