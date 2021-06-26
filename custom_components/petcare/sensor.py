@@ -8,7 +8,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN
-from .petcare import Petcare
+from .petcare import Petcare, Location
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,7 +56,8 @@ async def _setup(hass, async_add_entities):
         _LOGGER.error("petcare %s %s", entity_id, location)
         for _dev in devices:
             if pet_name == _dev["name"].capitalize():
-                res = await petcare_data_handler.set_pet_location(_dev["id"], location)
+                enum_location = Location.INSIDE if location == "inside" else Location.OUTSIDE
+                res = await petcare_data_handler.set_pet_location(_dev["id"], enum_location)
                 _LOGGER.error(
                     "petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], location, res
                 )
