@@ -3,8 +3,6 @@ import logging
 import voluptuous as vol
 from typing import Any, Dict, Optional
 
-from homeassistant.const import ATTR_ENTITY_ID
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN
