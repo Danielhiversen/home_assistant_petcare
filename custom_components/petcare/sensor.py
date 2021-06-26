@@ -40,7 +40,7 @@ async def _setup(hass, async_add_entities):
 
     set_pet_location_schema = vol.Schema(
         {
-            vol.Optional("pet_name"): pet_names,
+            vol.Optional("pet_name"): vol.In(pet_names),
             vol.Required("location"): vol.In(["inside", "outside"]),
         }
     )
