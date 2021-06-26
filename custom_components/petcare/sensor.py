@@ -57,7 +57,9 @@ async def _setup(hass, async_add_entities):
         for _dev in devices:
             if pet_name == _dev["name"].capitalize():
                 res = await petcare_data_handler.set_pet_location(_dev["id"], location)
-                _LOGGER.error("petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], location, res)
+                _LOGGER.error(
+                    "petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], location, res
+                )
 
     hass.services.async_register(
         DOMAIN,
