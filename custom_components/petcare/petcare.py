@@ -406,9 +406,7 @@ class Petcare:
                 return response
         return None
 
-    async def set_pet_location(
-        self, pet_id: int, location: Location
-    ):
+    async def set_pet_location(self, pet_id: int, location: Location):
         """Retrieve the flap data/state."""
         resource = POSITION_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, pet_id=pet_id)
         data = {
