@@ -405,3 +405,26 @@ class Petcare:
             if state == desired_state:
                 return response
         return None
+
+    async def set_pet_location(self, pet_id: int, location: Location) -> dict[str, Any] | None:
+        """Retrieve the flap data/state."""
+        resource = POSITION_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, pet_id=pet_id)
+        data = {
+            "where": int(location.value),
+            "since": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        if (response := await self.call(method="POST", resource=resource, data=data)) and (
+                response_data := response.get("data")
+        ):
+
+            desired_state = data.get("where")
+            state = response_data.get("where")
+
+            logging.debug(f"bool({state} == {desired_state}) = {bool(state == desired_state)}")
+
+            # check if the state is correctly updated
+            if state == desired_state:
+                return response
+
+        return None
