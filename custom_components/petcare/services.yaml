@@ -1,0 +1,11 @@
+# Describes the format for available component services
+
+set_pet_location:
+  description: Set pet location
+  fields:
+    entity_id:
+      description: Entity id of pet device
+      example: sensor.artemis
+    location:
+      description: Pet location (Inside or Outside)
+      example: Inside
