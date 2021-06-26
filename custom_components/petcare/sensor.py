@@ -53,12 +53,12 @@ async def _setup(hass, async_add_entities):
         location = service.data.get("location")
         _LOGGER.error("petcare %s %s", pet_name, location)
         for _dev in devices:
-            if pet_name.lower() == _dev["name"].lower():
+            if pet_name.lower() == _dev.name.lower():
                 enum_location = (
                     Location.INSIDE if location == "inside" else Location.OUTSIDE
                 )
                 res = await petcare_data_handler.set_pet_location(
-                    _dev["id"], enum_location
+                    _dev.dev["id"], enum_location
                 )
                 _LOGGER.error(
                     "petcare %s %s %s %s",
