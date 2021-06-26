@@ -47,6 +47,8 @@ async def _setup(hass, async_add_entities):
         }
     )
 
+    _LOGGER.error("petcare names %s ", pet_names)
+
     async def service_set_pet_location_handle(service):
         """Handle for services."""
         pet_name = service.data.get("pet_name")
