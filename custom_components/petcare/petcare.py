@@ -5,7 +5,6 @@ import logging
 from enum import IntEnum
 from http import HTTPStatus
 from uuid import uuid1
-from typing import Any
 
 import async_timeout
 
@@ -409,7 +408,7 @@ class Petcare:
 
     async def set_pet_location(
         self, pet_id: int, location: Location
-    ) -> dict[str, Any] | None:
+    ):
         """Retrieve the flap data/state."""
         resource = POSITION_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, pet_id=pet_id)
         data = {
