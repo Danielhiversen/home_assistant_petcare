@@ -56,10 +56,18 @@ async def _setup(hass, async_add_entities):
         _LOGGER.error("petcare %s %s", entity_id, location)
         for _dev in devices:
             if pet_name == _dev["name"].capitalize():
-                enum_location = Location.INSIDE if location == "inside" else Location.OUTSIDE
-                res = await petcare_data_handler.set_pet_location(_dev["id"], enum_location)
+                enum_location = (
+                    Location.INSIDE if location == "inside" else Location.OUTSIDE
+                )
+                res = await petcare_data_handler.set_pet_location(
+                    _dev["id"], enum_location
+                )
                 _LOGGER.error(
-                    "petcare %s %s %s %s", _dev.entity_id, _dev.dev["id"], enum_location, res
+                    "petcare %s %s %s %s",
+                    _dev.entity_id,
+                    _dev.dev["id"],
+                    enum_location,
+                    res,
                 )
 
     hass.services.async_register(
