@@ -390,7 +390,7 @@ class Petcare:
         return None
 
     async def locking(self, flap_id: int, mode: LockState):
-        """Retrieve the flap data/state."""
+        """Locking."""
         resource = CONTROL_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, flap_id=flap_id)
         data = {"locking": int(mode.value)}
 
@@ -407,26 +407,10 @@ class Petcare:
         return None
 
     async def set_pet_location(self, pet_id: int, location: Location):
-        """Retrieve the flap data/state."""
+        """Set the pet location."""
         resource = POSITION_RESOURCE.format(BASE_RESOURCE=BASE_RESOURCE, pet_id=pet_id)
         data = {
             "where": int(location.value),
-            "since": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            "since": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         }
-
-        if (
-            response := await self.call(method="POST", resource=resource, data=data)
-        ) and (response_data := response.get("data")):
-
-            desired_state = data.get("where")
-            state = response_data.get("where")
-
-            logging.debug(
-                f"bool({state} == {desired_state}) = {bool(state == desired_state)}"
-            )
-
-            # check if the state is correctly updated
-            if state == desired_state:
-                return response
-
-        return None
+        await self.fetch(method="POST", resource=resource, data=data)
