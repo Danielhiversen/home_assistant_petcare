@@ -112,6 +112,6 @@ class SurePetcareSensor(Entity):
         return self.dev["state"]
 
     @property
-    def device_state_attributes(self) -> Optional[Dict[str, Any]]:
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         """Return the state attributes of the device."""
         return self.dev["attributes"]
