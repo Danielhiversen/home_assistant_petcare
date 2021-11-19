@@ -150,7 +150,7 @@ class Hub(SurePetcareBinarySensor):
         return self.available
 
     @property
-    def device_state_attributes(self) -> Optional[Dict[str, Any]]:
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         """Return the state attributes of the device."""
         attributes = None
         if self._state:
