@@ -83,7 +83,6 @@ class SurePetcareSensor(Entity):
 
         self.dev = dev
         self.petcare_data_handler: Petcare = petcare_data_handler
-
         self._attr_name = self.dev["name"].capitalize()
         self._attr_unique_id = f"{self.dev['household_id']}-{self.dev['id']}"
 
@@ -103,6 +102,6 @@ class SurePetcareSensor(Entity):
         return self.dev["state"]
 
     @property
-    def device_state_attributes(self) -> Optional[Dict[str, Any]]:
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         """Return the state attributes of the device."""
         return self.dev["attributes"]

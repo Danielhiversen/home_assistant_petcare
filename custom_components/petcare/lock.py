@@ -83,6 +83,6 @@ class SurePetcareLock(LockEntity):
         self._dev = self.petcare_data_handler.get_device(self._dev["id"])
 
     @property
-    def device_state_attributes(self) -> Optional[Dict[str, Any]]:
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         """Return the state attributes of the device."""
         return self._dev["attributes"]
