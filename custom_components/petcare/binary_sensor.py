@@ -56,6 +56,7 @@ async def async_setup_platform(
 
 class SurePetcareBinarySensor(BinarySensorEntity):
     """A binary sensor implementation for Sure Petcare Entities."""
+    _attr_should_poll = False
 
     def __init__(
         self,
@@ -67,7 +68,6 @@ class SurePetcareBinarySensor(BinarySensorEntity):
         """Initialize a Sure Petcare binary sensor."""
         self._id = _id
         self._sure_type = sure_type
-        self._device_class = device_class
 
         self._spc: SurePetcareAPI = spc
         self._spc_data: Dict[str, Any] = self._spc.states[self._sure_type].get(self._id)
@@ -79,7 +79,9 @@ class SurePetcareBinarySensor(BinarySensorEntity):
         else:
             name = f"Unnamed {self._sure_type.name.capitalize()}"
 
-        self._name = f"{self._sure_type.name.capitalize()} {name.capitalize()}"
+        self._attr_name = f"{self._sure_type.name.capitalize()} {name.capitalize()}"
+        self._attr_unique_id = f"{self._spc_data['household_id']}-{self._id}"
+        self._attr_device_class = device_class
 
         self._async_unsub_dispatcher_connect = None
 
@@ -87,26 +89,6 @@ class SurePetcareBinarySensor(BinarySensorEntity):
     def is_on(self) -> Optional[bool]:
         """Return true if entity is on/unlocked."""
         return bool(self._state)
-
-    @property
-    def should_poll(self) -> bool:
-        """Return true."""
-        return False
-
-    @property
-    def name(self) -> str:
-        """Return the name of the device if any."""
-        return self._name
-
-    @property
-    def device_class(self) -> str:
-        """Return the device class."""
-        return None if not self._device_class else self._device_class
-
-    @property
-    def unique_id(self) -> str:
-        """Return an unique ID."""
-        return f"{self._spc_data['household_id']}-{self._id}"
 
     async def async_update(self) -> None:
         """Get the latest data and update the state."""
@@ -210,15 +192,8 @@ class DeviceConnectivity(SurePetcareBinarySensor):
         """Initialize a Sure Petcare Device."""
         super().__init__(_id, spc, DEVICE_CLASS_CONNECTIVITY, sure_type)
 
-    @property
-    def name(self) -> str:
-        """Return the name of the device if any."""
-        return f"{self._name}_connectivity"
-
-    @property
-    def unique_id(self) -> str:
-        """Return an unique ID."""
-        return f"{self._spc_data['household_id']}-{self._id}-connectivity"
+        self._attr_name = f"{self._name}_connectivity"
+        self._attr_unique_id = f"{self._spc_data['household_id']}-{self._id}-connectivity"
 
     @property
     def available(self) -> bool:
