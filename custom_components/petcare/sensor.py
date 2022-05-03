@@ -83,18 +83,8 @@ class SurePetcareSensor(Entity):
 
         self.dev = dev
         self.petcare_data_handler: Petcare = petcare_data_handler
-
-        self._name = self.dev["name"].capitalize()
-
-    @property
-    def name(self) -> str:
-        """Return the name of the device if any."""
-        return self._name
-
-    @property
-    def unique_id(self) -> str:
-        """Return an unique ID."""
-        return f"{self.dev['household_id']}-{self.dev['id']}"
+        self._attr_name = self.dev["name"].capitalize()
+        self._attr_unique_id = f"{self.dev['household_id']}-{self.dev['id']}"
 
     @property
     def available(self) -> bool:

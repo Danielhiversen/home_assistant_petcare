@@ -48,17 +48,8 @@ class SurePetcareLock(LockEntity):
         self.petcare_data_handler: Petcare = petcare_data_handler
         self._lock_state = lock_state
 
-        self._name = f"{lock_state}_{self._dev['name'].capitalize()}"
-
-    @property
-    def name(self) -> str:
-        """Return the name of the device if any."""
-        return self._name
-
-    @property
-    def unique_id(self) -> str:
-        """Return an unique ID."""
-        return f"lock-{self._dev['household_id']}-{self._dev['id']}-{self._lock_state}"
+        self._attr_name = f"{lock_state}_{self._dev['name'].capitalize()}"
+        self._attr_unique_id = f"lock-{self._dev['household_id']}-{self._dev['id']}-{self._lock_state}"
 
     @property
     def available(self) -> bool:
